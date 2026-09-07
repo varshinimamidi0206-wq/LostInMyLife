@@ -123,22 +123,22 @@ export const GooglePhotosImportModal: React.FC<GooglePhotosImportModalProps> = (
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
-      <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-6 sm:p-7 space-y-5 shadow-2xl relative my-auto">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in overflow-y-auto">
+      <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-xl w-full p-5 sm:p-7 space-y-4 sm:space-y-5 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-gray-800">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-cyan-500 flex items-center justify-center p-0.5 shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-rose-500 to-cyan-500 flex items-center justify-center p-0.5 shadow-sm flex-shrink-0">
               <div className="w-full h-full bg-gray-950 rounded-[14px] flex items-center justify-center">
                 <ImageIcon className="w-5 h-5 text-cyan-400" />
               </div>
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-black text-white">
-                Import from Google Photos
+              <h3 className="text-base sm:text-lg font-black text-white leading-tight">
+                Import from Photos
               </h3>
-              <p className="text-xs text-gray-400">
-                Turn your selected photos into searchable physical memories
+              <p className="text-xs text-gray-300">
+                Choose photos from Google Photos that you want LostInMyLife to remember.
               </p>
             </div>
           </div>
@@ -146,21 +146,22 @@ export const GooglePhotosImportModal: React.FC<GooglePhotosImportModalProps> = (
           <button
             onClick={onClose}
             disabled={isImporting}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-gray-800/80 text-gray-400 hover:text-white active:scale-90"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Privacy Promise Banner */}
-        <div className="p-3.5 bg-cyan-950/40 border border-cyan-500/30 rounded-2xl text-xs text-cyan-300 flex items-start space-x-2.5">
+        {/* Privacy Promise Banner (Requirement 9) */}
+        <div className="p-3.5 bg-cyan-950/40 border border-cyan-500/30 rounded-2xl text-xs text-cyan-200 flex items-start space-x-2.5">
           <Shield className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
           <div className="space-y-0.5">
-            <p className="font-semibold text-white">
-              Privacy First • Google Photos Picker API
+            <p className="font-bold text-white">
+              Private & Intentional
             </p>
             <p className="text-[11px] text-cyan-200/90 leading-relaxed">
-              "LostInMyLife only processes the photos you choose." We never scan or access your entire photo library.
+              You choose which photos to import. LostInMyLife never scans or accesses your full photo library.
             </p>
           </div>
         </div>

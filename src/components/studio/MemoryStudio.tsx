@@ -52,33 +52,33 @@ export const MemoryStudio: React.FC<MemoryStudioProps> = ({
   );
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-7 pb-24 md:pb-12">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-7 pb-28 md:pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-semibold mb-1">
             <Layers className="w-3.5 h-3.5" />
-            <span>Desktop Control Center</span>
+            <span>Timeline Overview</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            Memory Studio
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
+            Memory Timeline
           </h2>
-          <p className="text-xs sm:text-sm text-gray-400">
-            Laptop-friendly dashboard, timeline, memory sources, and context relationships.
+          <p className="text-xs sm:text-sm text-gray-300">
+            Browse your physical memories in chronological order.
           </p>
         </div>
 
-        {/* Prototype Office Kit / Device Sync Indicator */}
+        {/* Sync Indicator */}
         <div className="flex items-center space-x-3 bg-gray-900/80 border border-cyan-500/30 rounded-2xl p-3 shadow-glow">
           <div className="flex items-center space-x-2 text-xs">
             <Smartphone className="w-4 h-4 text-cyan-400" />
-            <span className="text-gray-400">Phone</span>
+            <span className="text-gray-300">Mobile</span>
             <span className="text-cyan-400 font-bold">↔</span>
             <Laptop className="w-4 h-4 text-blue-400" />
-            <span className="text-white font-semibold">Memory Studio</span>
+            <span className="text-white font-semibold">Computer</span>
           </div>
           <span className="text-[10px] uppercase tracking-wider font-bold bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30">
-            Connected Device (Prototype)
+            Synced
           </span>
         </div>
       </div>
@@ -295,12 +295,12 @@ export const MemoryStudio: React.FC<MemoryStudioProps> = ({
             <div className="flex items-center space-x-2">
               <Activity className="w-4 h-4 text-cyan-400" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-                Phone ↔ Studio Sync
+                Phone ↔ Computer Sync
               </h3>
             </div>
 
             <p className="text-xs text-gray-300 leading-relaxed">
-              LostInMyLife links physical memories captured on the go on your phone with the expanded Memory Studio on your laptop.
+              LostInMyLife keeps all your physical memories synchronized between your mobile device and your computer.
             </p>
 
             <div className="pt-2 flex flex-col space-y-2">

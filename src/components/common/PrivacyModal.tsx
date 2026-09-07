@@ -33,26 +33,27 @@ export const PrivacyModal: React.FC<PrivacyModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl relative">
-        <div className="flex items-center justify-between">
+    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-fade-in overflow-y-auto">
+      <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl relative my-auto max-h-[92vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-2 border-b border-gray-800/60">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-xl bg-cyan-950 text-cyan-400">
+            <div className="p-2 rounded-xl bg-cyan-950 text-cyan-400 flex-shrink-0">
               <Shield className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-base font-bold text-white">
-                Privacy & Data Controls
+                Privacy & Data
               </h3>
               <p className="text-xs text-gray-400">
-                🔒 Your memories are private.
+                Your memories stay private
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white"
+            className="min-w-[38px] min-h-[38px] flex items-center justify-center rounded-xl bg-gray-800/80 text-gray-400 hover:text-white active:scale-90"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>

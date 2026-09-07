@@ -28,20 +28,17 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
     'Objects',
     'Places',
     'Documents',
-    'Books',
-    'Food',
-    'Products',
     'Experiences',
-    'Imported Photos',
+    'Photos',
   ];
 
   const exampleSearches = [
-    'blue thing in Chennai',
-    'coffee shop',
+    'blue thing',
+    'café',
     'certificate',
     'book',
-    'temple',
-    'concert ticket',
+    'handbag',
+    'shoes',
   ];
 
   useEffect(() => {
@@ -60,13 +57,10 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
             const cat = (m.category || '').toLowerCase();
             const type = (m.memory_type || '').toLowerCase();
             const target = activeFilter.toLowerCase();
-            if (target === 'imported photos') return Boolean(m.is_imported || m.source === 'google_photos');
-            if (target === 'objects') return type === 'object';
+            if (target === 'photos') return Boolean(m.is_imported || m.source === 'google_photos');
+            if (target === 'objects') return type === 'object' || type === 'product' || type === 'food' || type === 'book';
             if (target === 'places') return type === 'place';
-            if (target === 'documents') return type === 'document';
-            if (target === 'books') return type === 'book';
-            if (target === 'food') return type === 'food' || cat.includes('food');
-            if (target === 'products') return type === 'product';
+            if (target === 'documents') return type === 'document' || type === 'receipt';
             if (target === 'experiences') return type === 'event' || type === 'ticket' || cat.includes('experience');
             return cat.includes(target) || target.includes(cat);
           });
@@ -132,17 +126,14 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
   }, [filteredMemories]);
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 pb-24 md:pb-12">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 pb-28 md:pb-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-widest text-cyan-400">
-            Physical Memory Timeline
-          </span>
-          <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-0.5">
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white">
             Your Memories
           </h2>
-          <p className="text-xs sm:text-sm text-gray-400 mt-1">
+          <p className="text-xs sm:text-sm text-gray-300 mt-1">
             "Search your physical memories, not just your photos."
           </p>
         </div>
@@ -150,14 +141,14 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
         <div className="flex items-center space-x-2.5 self-start sm:self-auto">
           <button
             onClick={onOpenPhotosImport}
-            className="px-3.5 py-2 rounded-xl bg-gray-900 border border-gray-700 hover:border-cyan-500/40 text-cyan-300 font-semibold text-xs transition-colors flex items-center space-x-1.5"
+            className="min-h-[44px] px-4 py-2.5 rounded-2xl bg-gray-900 border border-gray-800 hover:border-cyan-500/40 text-cyan-300 hover:text-white font-semibold text-xs sm:text-sm transition-all flex items-center space-x-2 active:scale-95"
           >
-            <ImageIcon className="w-3.5 h-3.5" />
+            <ImageIcon className="w-4 h-4" />
             <span>Import Photos</span>
           </button>
           <button
             onClick={onNavigateCapture}
-            className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition-colors shadow-glow"
+            className="min-h-[44px] px-5 py-2.5 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs sm:text-sm transition-all shadow-glow active:scale-95"
           >
             + Capture
           </button>
@@ -165,15 +156,15 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
       </div>
 
       {/* Search Bar */}
-      <div className="relative">
+      <div className="space-y-2">
         <div className="relative flex items-center">
           <Search className="w-4 h-4 text-cyan-400 absolute left-4 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search your physical memories... (e.g. 'blue thing in Chennai', 'certificate', 'book', 'temple')"
-            className="w-full bg-gray-900/80 border border-gray-800/90 rounded-2xl pl-11 pr-20 py-3.5 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all shadow-inner"
+            placeholder="Search your physical memories... (e.g. 'blue handbag', 'café', 'certificate')"
+            className="w-full min-h-[50px] bg-gray-900/80 border border-gray-800 rounded-2xl pl-11 pr-20 py-3 text-xs sm:text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all shadow-inner"
           />
           {isSearching && (
             <div className="absolute right-11 text-cyan-400">
@@ -183,7 +174,8 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-4 text-gray-400 hover:text-white"
+              className="absolute right-4 p-1 text-gray-400 hover:text-white"
+              aria-label="Clear Search"
             >
               <X className="w-4 h-4" />
             </button>
@@ -191,13 +183,13 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
         </div>
 
         {/* Quick Example Chips */}
-        <div className="flex items-center space-x-2 overflow-x-auto py-2 scrollbar-none text-[11px] text-gray-400">
+        <div className="flex items-center space-x-2 overflow-x-auto py-1 scrollbar-none text-[11px] text-gray-400">
           <span className="text-gray-500 font-medium">Try:</span>
           {exampleSearches.map(ex => (
             <button
               key={ex}
               onClick={() => setSearchQuery(ex)}
-              className="px-2.5 py-0.5 rounded-lg bg-gray-900/70 border border-gray-800 text-gray-300 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors flex-shrink-0"
+              className="px-2.5 py-1 rounded-xl bg-gray-900/70 border border-gray-800 text-gray-300 hover:text-cyan-300 hover:border-cyan-500/40 transition-colors flex-shrink-0"
             >
               "{ex}"
             </button>
@@ -205,9 +197,9 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
         </div>
       </div>
 
-      {/* Filter Pills & Sorting Control */}
+      {/* Category Filter Pills & Sorting Control */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-        {/* Filter Pills */}
+        {/* Category Pills (All, Objects, Places, Documents, Experiences, Photos) */}
         <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
           {filterOptions.map(cat => {
             const isActive = activeFilter === cat;
@@ -215,7 +207,7 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
               <button
                 key={cat}
                 onClick={() => setActiveFilter(cat)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`min-h-[38px] px-4 py-2 rounded-2xl text-xs font-semibold whitespace-nowrap transition-all active:scale-95 ${
                   isActive
                     ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-sm'
                     : 'bg-gray-900/60 text-gray-400 border border-gray-800 hover:text-gray-200 hover:bg-gray-900'
@@ -233,7 +225,7 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
           <select
             value={sortOption}
             onChange={e => setSortOption(e.target.value as any)}
-            className="bg-gray-900/80 border border-gray-800 rounded-xl px-2.5 py-1 text-xs text-gray-300 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+            className="min-h-[38px] bg-gray-900 border border-gray-800 rounded-xl px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:ring-1 focus:ring-cyan-500"
           >
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
@@ -242,12 +234,12 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
         </div>
       </div>
 
-      {/* Visual Memory Timeline */}
+      {/* Memory Cards Display */}
       {filteredMemories.length > 0 ? (
         <div className="space-y-8 pt-2">
           {Object.entries(groupedTimeline).map(([dateGroup, items]) => (
             <div key={dateGroup} className="space-y-3.5">
-              <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-800/80 pb-2">
+              <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-gray-400 border-b border-gray-800 pb-2">
                 <Calendar className="w-3.5 h-3.5 text-cyan-400" />
                 <span>{dateGroup}</span>
                 <span className="text-[10px] text-gray-500 font-mono">
@@ -268,32 +260,32 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
           ))}
         </div>
       ) : (
-        /* Empty State */
-        <div className="bg-gray-900/30 border border-gray-800/80 rounded-3xl p-10 text-center space-y-4 max-w-md mx-auto my-12">
-          <div className="w-14 h-14 rounded-2xl bg-gray-800/80 mx-auto flex items-center justify-center text-gray-400">
+        /* Empty State (Requirement 16) */
+        <div className="bg-gray-900/30 border border-gray-800/80 rounded-3xl p-8 sm:p-12 text-center space-y-4 max-w-md mx-auto my-8">
+          <div className="w-14 h-14 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 mx-auto flex items-center justify-center text-cyan-400">
             <Sparkles className="w-7 h-7" />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white">No memories found</h3>
-            <p className="text-xs text-gray-400 mt-1">
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-white">Your memories will appear here.</h3>
+            <p className="text-xs text-gray-400">
               {searchQuery
-                ? `No memories matched "${searchQuery}". Try a broader term or reset the category filter.`
-                : 'Your physical memory archive is empty. Capture something around you!'}
+                ? `No memories matched "${searchQuery}". Try a different word or clear the filter.`
+                : "Start by saving something you've seen."}
             </p>
           </div>
           {searchQuery ? (
             <button
               onClick={() => setSearchQuery('')}
-              className="px-4 py-2 rounded-xl bg-gray-800 text-xs font-semibold text-gray-200 hover:bg-gray-700"
+              className="px-5 py-2.5 rounded-2xl bg-gray-800 text-xs font-semibold text-gray-200 hover:bg-gray-700"
             >
               Clear Search
             </button>
           ) : (
             <button
               onClick={onNavigateCapture}
-              className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-xs font-bold text-white shadow-glow"
+              className="px-6 py-3 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-xs font-bold text-white shadow-glow transition-all active:scale-95"
             >
-              Capture Your First Memory
+              📷 Save Your First Memory
             </button>
           )}
         </div>

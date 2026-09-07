@@ -27,24 +27,24 @@ export const HaveISeenThis: React.FC<HaveISeenThisProps> = ({
   // If check has not been triggered yet and we have a manual trigger handler
   if (!similarity && !isChecking && onCheckSimilarity && !hasTriggered) {
     return (
-      <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h4 className="text-xs font-bold text-white flex items-center space-x-1.5">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
             <span>Have I seen this before?</span>
           </h4>
           <p className="text-[11px] text-gray-400 mt-0.5">
-            Compare this image against all your previously saved physical memories.
+            Check if you've previously captured or observed something similar.
           </p>
         </div>
 
         <button
           type="button"
           onClick={handleCheck}
-          className="px-3.5 py-2 rounded-xl bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-xs font-semibold flex items-center space-x-1.5 transition-colors whitespace-nowrap shadow-sm"
+          className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all whitespace-nowrap shadow-sm active:scale-95"
         >
           <Search className="w-3.5 h-3.5" />
-          <span>Check My Memories</span>
+          <span>🔍 Check My Memories</span>
         </button>
       </div>
     );
@@ -52,10 +52,10 @@ export const HaveISeenThis: React.FC<HaveISeenThisProps> = ({
 
   if (isChecking) {
     return (
-      <div className="p-4 bg-gray-900/40 border border-gray-800 rounded-2xl text-center space-y-2 animate-pulse">
+      <div className="p-4 bg-gray-900/50 border border-gray-800 rounded-2xl text-center space-y-2 animate-pulse">
         <Loader2 className="w-5 h-5 text-cyan-400 animate-spin mx-auto" />
-        <p className="text-xs text-gray-300 font-mono">
-          Comparing against your physical memory archive...
+        <p className="text-xs text-cyan-300 font-medium">
+          Checking your saved memories...
         </p>
       </div>
     );
@@ -65,13 +65,13 @@ export const HaveISeenThis: React.FC<HaveISeenThisProps> = ({
 
   if (!similarity.match_found || !similarity.similar_memory) {
     return (
-      <div className="bg-gray-900/40 border border-gray-800/80 rounded-2xl p-4 text-center">
+      <div className="bg-gray-900/50 border border-gray-800/80 rounded-2xl p-4 text-center">
         <div className="flex items-center justify-center space-x-2 text-xs text-gray-400">
           <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
           <span>Have I seen this before?</span>
         </div>
-        <p className="text-xs text-gray-300 mt-1">
-          I couldn't find a similar memory in your physical world archive. This appears to be new!
+        <p className="text-xs text-gray-200 mt-1 font-medium">
+          I couldn't find a similar memory. This appears to be new!
         </p>
       </div>
     );
@@ -88,7 +88,7 @@ export const HaveISeenThis: React.FC<HaveISeenThisProps> = ({
     : 'Earlier';
 
   return (
-    <div className="bg-gradient-to-r from-amber-950/40 via-gray-900/70 to-cyan-950/30 border border-amber-500/40 rounded-2xl p-4 shadow-glow-amber animate-slide-up space-y-3">
+    <div className="bg-gradient-to-r from-amber-950/40 via-gray-900/80 to-cyan-950/30 border border-amber-500/40 rounded-2xl p-4 shadow-glow-amber animate-slide-up space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
@@ -101,38 +101,31 @@ export const HaveISeenThis: React.FC<HaveISeenThisProps> = ({
         </span>
       </div>
 
-      <p className="text-sm font-semibold text-white">
-        Yes — you may have seen something similar before.
+      <p className="text-sm font-bold text-white">
+        Yes! You have seen something similar before.
       </p>
 
       {/* Memory Preview Card */}
-      <div className="flex items-center space-x-3 bg-gray-950/70 border border-gray-800/80 rounded-xl p-3">
+      <div className="flex items-center space-x-3 bg-gray-950/80 border border-gray-800 rounded-xl p-3">
         <img
           src={mem.image_url}
           alt={memTitle}
-          className="w-16 h-16 rounded-lg object-cover border border-gray-800 flex-shrink-0"
+          className="w-16 h-16 rounded-xl object-cover border border-gray-800 flex-shrink-0"
         />
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-white truncate">{memTitle}</h4>
-            {mem.price && (
-              <span className="text-xs font-semibold text-emerald-400 ml-2">
-                ₹{mem.price}
-              </span>
-            )}
-          </div>
+          <h4 className="text-xs sm:text-sm font-bold text-white truncate">{memTitle}</h4>
 
-          <p className="text-[11px] text-gray-400 flex items-center space-x-1 mt-1 truncate">
-            <MapPin className="w-3 h-3 text-cyan-400 flex-shrink-0" />
+          <p className="text-[11px] text-gray-300 flex items-center space-x-1 mt-1 truncate">
+            <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
             <span className="truncate">{mem.location || mem.place_name || 'Saved location'}</span>
           </p>
 
           <p className="text-[11px] text-gray-400 flex items-center space-x-1 mt-0.5">
-            <Calendar className="w-3 h-3 text-gray-400 flex-shrink-0" />
+            <Calendar className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             <span>{dateFormatted}</span>
             {similarity.similarity_reason && (
-              <span className="text-[10px] text-amber-300/80 ml-2 truncate">
+              <span className="text-[10px] text-amber-300/90 ml-2 truncate">
                 • {similarity.similarity_reason}
               </span>
             )}
@@ -142,8 +135,9 @@ export const HaveISeenThis: React.FC<HaveISeenThisProps> = ({
         {onViewMemory && (
           <button
             onClick={() => onViewMemory(mem)}
-            className="p-2 rounded-lg bg-gray-900 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl bg-gray-900 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
             title="View Previous Memory Details"
+            aria-label="View Memory"
           >
             <ExternalLink className="w-4 h-4" />
           </button>

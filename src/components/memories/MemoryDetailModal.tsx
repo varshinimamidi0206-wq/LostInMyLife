@@ -45,7 +45,7 @@ export const MemoryDetailModal: React.FC<MemoryDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in overflow-y-auto">
-      <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl my-auto relative">
+      <div className="bg-gray-900 border border-gray-800 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl my-auto relative max-h-[92vh] overflow-y-auto">
         {/* Header / Hero Image */}
         <div className="relative aspect-[16/9] sm:aspect-[2/1] w-full bg-black">
           <img
@@ -56,10 +56,10 @@ export const MemoryDetailModal: React.FC<MemoryDetailModalProps> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-black/60 pointer-events-none" />
 
           {/* Close button */}
-          <div className="absolute top-4 right-4 flex items-center space-x-2">
+          <div className="absolute top-3 right-3 flex items-center space-x-2">
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-gray-950/80 text-gray-300 hover:text-white backdrop-blur-md border border-gray-800"
+              className="min-w-[42px] min-h-[42px] flex items-center justify-center rounded-full bg-gray-950/80 text-gray-300 hover:text-white backdrop-blur-md border border-gray-800 active:scale-90"
               aria-label="Close modal"
             >
               <X className="w-5 h-5" />

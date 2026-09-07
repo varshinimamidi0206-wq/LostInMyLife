@@ -19,21 +19,21 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ stage }) => {
 
   const steps = [
     { id: 1, text: 'Looking at your memory...', icon: Eye },
-    { id: 2, text: 'Finding important details...', icon: Sparkles },
-    { id: 3, text: 'Saving to your physical memory...', icon: Brain },
+    { id: 2, text: 'Finding where you saw this...', icon: Sparkles },
+    { id: 3, text: 'Saving your memory...', icon: Brain },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 bg-gray-950/85 backdrop-blur-md flex flex-col items-center justify-center p-6 animate-fade-in">
+    <div className="fixed inset-0 z-50 bg-gray-950/85 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-fade-in">
       <div className="max-w-xs w-full bg-gray-900/90 border border-gray-800 rounded-3xl p-6 text-center shadow-glow">
         {/* Animated Icon */}
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 mx-auto flex items-center justify-center shadow-glow mb-5 relative">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 mx-auto flex items-center justify-center shadow-glow mb-4 relative">
           <Brain className="w-8 h-8 text-white animate-pulse" />
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-400 rounded-full animate-ping"></span>
         </div>
 
         <h3 className="text-base font-bold text-white mb-4">
-          Structuring Physical Memory
+          Understanding your memory...
         </h3>
 
         {/* Step Progression */}
@@ -67,8 +67,8 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ stage }) => {
           })}
         </div>
 
-        <p className="text-[11px] text-gray-500 font-mono">
-          Private AI Vision • Powered by Gemini
+        <p className="text-[11px] text-gray-400 font-medium">
+          Private & Secure
         </p>
       </div>
     </div>
