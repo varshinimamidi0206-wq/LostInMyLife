@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS public.memories (
     location TEXT,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
-    captured_at TIMESTAMPTZ DEFAULT now(),
+    captured_at TIMESTAMPTZ,
+    uploaded_at TIMESTAMPTZ DEFAULT now(),
     search_text TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -56,6 +57,8 @@ ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS people_context TEXT[] DEFAU
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS is_imported BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS place_name TEXT;
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS captured_at TIMESTAMPTZ;
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMPTZ DEFAULT now();
 
 -- Try adding embedding column if vector extension is present
 DO $$

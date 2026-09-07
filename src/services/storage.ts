@@ -118,10 +118,11 @@ export async function syncMemories(userId?: string | null): Promise<Memory[]> {
           colors: row.colors || [],
           description: row.description || row.summary,
           important_details: row.important_details || [],
-          location: row.location || 'Physical World',
+          location: row.location || 'Location unavailable',
           latitude: row.latitude,
           longitude: row.longitude,
-          captured_at: row.captured_at,
+          captured_at: row.captured_at || null,
+          uploaded_at: row.uploaded_at || row.created_at || null,
           search_text: row.search_text,
           confidence: row.confidence || 0.95,
           is_demo: false,
@@ -170,10 +171,11 @@ export async function persistMemory(memory: Memory, userId?: string | null): Pro
         colors: memory.colors || [],
         description: memory.description || memory.summary,
         important_details: memory.important_details || [],
-        location: memory.location || 'Physical World',
+        location: memory.location || 'Location unavailable',
         latitude: memory.latitude || null,
         longitude: memory.longitude || null,
-        captured_at: memory.captured_at || new Date().toISOString(),
+        captured_at: memory.captured_at || null,
+        uploaded_at: memory.uploaded_at || new Date().toISOString(),
       };
 
       const { data, error } = await supabase

@@ -24,6 +24,7 @@ export default async function handler(req: any, res: any) {
       // Attempt full insert with new fields
       const insertPayload: Record<string, any> = {
         id: memory.id,
+        user_id: memory.user_id || null,
         image_url: memory.image_url,
         title: title,
         summary: summary,
@@ -45,10 +46,11 @@ export default async function handler(req: any, res: any) {
         colors: memory.colors || [],
         description: memory.description || summary,
         important_details: memory.important_details || [],
-        location: memory.location || 'Physical World',
+        location: memory.location || 'Location unavailable',
         latitude: memory.latitude || null,
         longitude: memory.longitude || null,
-        captured_at: memory.captured_at || new Date().toISOString(),
+        captured_at: memory.captured_at || null,
+        uploaded_at: memory.uploaded_at || new Date().toISOString(),
       };
 
       const { data, error } = await supabase
@@ -62,12 +64,14 @@ export default async function handler(req: any, res: any) {
         // Fallback: If some columns don't exist yet in user's Supabase schema
         const minimalPayload = {
           id: memory.id,
+          user_id: memory.user_id || null,
           image_url: memory.image_url,
           object_name: title,
           category: memory.category || 'General',
           description: memory.description || summary,
-          location: memory.location || 'Physical World',
-          captured_at: memory.captured_at || new Date().toISOString(),
+          location: memory.location || 'Location unavailable',
+          captured_at: memory.captured_at || null,
+          uploaded_at: memory.uploaded_at || new Date().toISOString(),
           price: memory.price || null,
           currency: memory.currency || null,
           visible_text: memory.visible_text || [],

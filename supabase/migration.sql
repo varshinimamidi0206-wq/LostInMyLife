@@ -18,6 +18,11 @@ ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS people_context TEXT[] DEFAU
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT '{}';
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS is_imported BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS place_name TEXT;
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS captured_at TIMESTAMPTZ;
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMPTZ DEFAULT now();
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE public.memories ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
 
 -- 3. Create index on user_id for fast user-specific queries
 CREATE INDEX IF NOT EXISTS idx_memories_user_id ON public.memories(user_id);

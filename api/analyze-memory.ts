@@ -60,7 +60,7 @@ export default async function handler(req: any, res: any) {
       source: 'resilient_fallback',
       analysis: {
         memory_type: 'object',
-        title: req.body?.user_note ? req.body.user_note.slice(0, 30) : 'Physical World Memory',
+        title: req.body?.user_note ? req.body.user_note.slice(0, 30) : 'Physical Memory',
         summary: 'Saved physical memory from your camera.',
         description: req.body?.user_note || 'Captured physical memory scene.',
         object_name: null,

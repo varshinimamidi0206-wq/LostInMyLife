@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Camera,
   Image as ImageIcon,
@@ -20,6 +20,9 @@ import { LoadingOverlay } from '../common/LoadingOverlay';
 import { analyzeMemoryImage, findSimilarMemory, saveMemoryRecord } from '../../services/api';
 import { uploadMemoryImage } from '../../services/supabase';
 import { AIAnalysisResult, Memory, SimilarityMatch } from '../../types/memory';
+import { extractPhotoMetadata } from '../../utils/exif';
+import { reverseGeocode, getCurrentDeviceLocation } from '../../utils/location';
+import { useAuth } from '../../context/AuthContext';
 
 interface CaptureScreenProps {
   existingMemories: Memory[];
@@ -32,12 +35,21 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
   onMemoryCreated,
   onViewMemory,
 }) => {
+  const { user } = useAuth();
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [userNote, setUserNote] = useState('');
   const [location, setLocation] = useState('');
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationStatus, setLocationStatus] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  // Date states: capturedAt stores original EXIF or camera capture timestamp
+  const [capturedAt, setCapturedAt] = useState<string | null>(null);
+  const [isExifDateAvailable, setIsExifDateAvailable] = useState<boolean>(true);
+  const [manualDate, setManualDate] = useState<string>('');
+
   const [price, setPrice] = useState('');
   const [brand, setBrand] = useState('');
   const [captureSource, setCaptureSource] = useState<'camera' | 'upload'>('camera');
@@ -53,7 +65,54 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleImageFile = (file: File) => {
+  // Automatically attempt real location detection when CaptureScreen mounts
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function detectInitialLocation() {
+      if (location) return;
+      setIsLocating(true);
+      setLocationStatus('Detecting your location...');
+
+      const result = await getCurrentDeviceLocation();
+      if (isCancelled) return;
+
+      setIsLocating(false);
+      if (result.error) {
+        setLocationStatus(result.error);
+      } else if (result.locationText) {
+        setLocation(result.locationText);
+        setLatitude(result.latitude);
+        setLongitude(result.longitude);
+        setLocationStatus('Current location detected');
+      }
+    }
+
+    detectInitialLocation();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
+  const handleManualLocationDetection = async () => {
+    setIsLocating(true);
+    setLocationStatus('Detecting your location...');
+
+    const result = await getCurrentDeviceLocation();
+    setIsLocating(false);
+
+    if (result.error) {
+      setLocationStatus(result.error);
+    } else if (result.locationText) {
+      setLocation(result.locationText);
+      setLatitude(result.latitude);
+      setLongitude(result.longitude);
+      setLocationStatus('Current location detected');
+    }
+  };
+
+  const handleImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       setErrorMessage('Please choose a valid photo (JPEG, PNG, WebP).');
       return;
@@ -64,6 +123,33 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
     setAnalysisResult(null);
     setCaptureSource('upload');
 
+    // 1. Extract EXIF metadata (Original photo date & GPS coordinates)
+    const exif = await extractPhotoMetadata(file);
+
+    // Photo Date Priority: EXIF original date -> manual selection -> null ("unavailable")
+    if (exif.originalDate) {
+      setCapturedAt(exif.originalDate);
+      setIsExifDateAvailable(true);
+      setManualDate(exif.originalDate.slice(0, 10));
+    } else {
+      setCapturedAt(null);
+      setIsExifDateAvailable(false);
+      setManualDate('');
+    }
+
+    // Photo GPS Priority: If photo has EXIF GPS, it takes precedence over current device location
+    if (exif.latitude !== null && exif.longitude !== null) {
+      setLatitude(exif.latitude);
+      setLongitude(exif.longitude);
+      setLocationStatus('Resolving photo GPS location...');
+
+      reverseGeocode(exif.latitude, exif.longitude).then(address => {
+        setLocation(address);
+        setLocationStatus('Photo GPS location detected');
+      });
+    }
+
+    // 2. Read image for preview and trigger AI analysis
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result as string;
@@ -80,13 +166,24 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
     }
   };
 
-  const handleCameraCapture = (base64: string) => {
+  const handleCameraCapture = (base64: string, captureTimestamp: string) => {
     setSelectedImage(base64);
     setIsCameraOpen(false);
     setCreatedMemory(null);
     setSimilarity(null);
     setAnalysisResult(null);
     setCaptureSource('camera');
+
+    // Camera photo capture timestamp is recorded at the moment of snapping
+    setCapturedAt(captureTimestamp);
+    setIsExifDateAvailable(true);
+    setManualDate(captureTimestamp.slice(0, 10));
+
+    // Ensure location is detected for the camera photo
+    if (!location) {
+      handleManualLocationDetection();
+    }
+
     triggerAutoAnalysis(base64);
   };
 
@@ -101,7 +198,9 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
       setAnalysisResult(analysis);
       if (analysis.price) setPrice(analysis.price);
       if (analysis.brand) setBrand(analysis.brand);
-      if (analysis.place_name && !location) setLocation(analysis.place_name);
+      if (analysis.place_name && !location) {
+        setLocation(analysis.place_name);
+      }
 
       // Trigger similarity check
       const memTitle = analysis.title || analysis.object_name || 'Physical Memory';
@@ -154,7 +253,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
       setLoadingStage('saving');
 
       const memoryTitle = analysisResult?.title || analysisResult?.object_name || userNote || 'Physical Memory';
-      const finalLocation = location || analysisResult?.location_hint || analysisResult?.place_name || 'Physical World';
+      const finalLocation = location.trim() || analysisResult?.place_name || analysisResult?.location_hint || 'Location unavailable';
 
       // Upload image or use base64 fallback
       let finalImageUrl = selectedImage;
@@ -165,8 +264,11 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
         console.warn('Image storage fallback:', uploadErr);
       }
 
+      const uploadTimestamp = new Date().toISOString();
+
       const newMemory: Memory = {
         id: crypto.randomUUID(),
+        user_id: user?.id,
         image_url: finalImageUrl,
         title: memoryTitle,
         summary: analysisResult?.summary || userNote || 'Saved physical memory.',
@@ -188,7 +290,8 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
         location: finalLocation,
         latitude: latitude,
         longitude: longitude,
-        captured_at: new Date().toISOString(),
+        captured_at: capturedAt || null,
+        uploaded_at: uploadTimestamp,
         confidence: analysisResult?.confidence || 0.95,
         is_demo: false,
       };
@@ -210,6 +313,10 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
     setLocation('');
     setLatitude(null);
     setLongitude(null);
+    setLocationStatus(null);
+    setCapturedAt(null);
+    setIsExifDateAvailable(true);
+    setManualDate('');
     setPrice('');
     setBrand('');
     setAnalysisResult(null);
@@ -222,11 +329,18 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
     }
   };
 
-  const currentDateFormatted = new Date().toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const formatDisplayDate = (isoString: string | null) => {
+    if (!isoString) return 'Original photo date unavailable';
+    try {
+      return new Date(isoString).toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return 'Date unavailable';
+    }
+  };
 
   return (
     <div className="max-w-xl mx-auto p-4 sm:p-6 space-y-6 pb-28 md:pb-12">
@@ -293,11 +407,15 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
               </h4>
               <p className="text-xs text-cyan-400 font-medium capitalize mt-0.5 flex items-center space-x-1">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{createdMemory.location || 'Saved location'}</span>
+                <span className="truncate">{createdMemory.location || 'Location unavailable'}</span>
               </p>
               <p className="text-xs text-gray-400 mt-1 flex items-center space-x-1 font-mono">
                 <Calendar className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                <span>{currentDateFormatted}</span>
+                <span>
+                  {createdMemory.captured_at
+                    ? formatDisplayDate(createdMemory.captured_at)
+                    : 'Date unavailable'}
+                </span>
               </p>
             </div>
           </div>
@@ -334,49 +452,60 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
           {!selectedImage ? (
             /* No photo selected: Match Reference UI Screen 2 */
             <div className="space-y-4">
-              {/* Large Camera Area */}
-              <div className="border-2 border-dashed border-cyan-500/30 hover:border-cyan-400/60 rounded-3xl p-6 sm:p-8 text-center bg-gray-900/40 transition-all group shadow-sm">
-                <div className="w-16 h-16 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 mx-auto flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-glow">
+              {/* Dashed Camera Area */}
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="group border-2 border-dashed border-gray-800 hover:border-cyan-500/50 rounded-3xl p-8 sm:p-12 text-center bg-gray-900/30 hover:bg-gray-900/50 transition-all cursor-pointer space-y-4"
+              >
+                {/* Circular Camera Icon Badge */}
+                <div className="w-16 h-16 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 mx-auto flex items-center justify-center group-hover:scale-110 transition-transform shadow-glow">
                   <Camera className="w-8 h-8" />
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-white">
-                  Take Photo
-                </h3>
-                <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
-                  Use your camera to capture something you want to remember.
-                </p>
 
-                <button
-                  type="button"
-                  onClick={() => setIsCameraOpen(true)}
-                  className="mt-4 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-glow transition-all active:scale-95"
-                >
-                  Take Photo
-                </button>
+                <div className="space-y-2">
+                  <p className="text-sm sm:text-base font-bold text-white">
+                    Capture or choose a photo
+                  </p>
+                  <p className="text-xs text-gray-400 max-w-sm mx-auto leading-relaxed">
+                    Point your camera at something in the physical world, or pick an existing photo from your gallery.
+                  </p>
+                </div>
+
+                {/* Two Clear Pill Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setIsCameraOpen(true);
+                    }}
+                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center space-x-2 shadow-glow transition-all active:scale-95"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Take Photo</span>
+                  </button>
+
+                  <span className="text-xs text-gray-500 font-medium">or</span>
+
+                  <button
+                    type="button"
+                    onClick={e => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-gray-900 hover:bg-gray-800 text-gray-200 border border-gray-700/80 font-semibold text-xs sm:text-sm flex items-center justify-center space-x-2 transition-colors active:scale-95"
+                  >
+                    <ImageIcon className="w-4 h-4 text-cyan-400" />
+                    <span>Choose Photo</span>
+                  </button>
+                </div>
               </div>
 
-              {/* "or" separator */}
-              <div className="text-center text-xs text-gray-500 font-medium">or</div>
-
-              {/* Secondary Action: Choose Photo */}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-full min-h-[50px] flex items-center justify-center space-x-2.5 py-3 px-4 rounded-2xl bg-gray-900/80 hover:bg-gray-800 border border-gray-800 hover:border-cyan-500/40 text-gray-200 hover:text-white font-bold text-xs sm:text-sm transition-all active:scale-[0.99]"
-              >
-                <ImageIcon className="w-4 h-4 text-cyan-400" />
-                <span>Choose Photo</span>
-              </button>
-
-              {/* Helper text below */}
-              <p className="text-center text-xs text-gray-400 px-4 leading-relaxed">
-                We'll look at your photo and understand what it is, where it might be, and when you saw it.
-              </p>
-
+              {/* Hidden File Input */}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/heic,image/*"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -443,7 +572,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                     </div>
                   </div>
 
-                  {/* Place */}
+                  {/* Location */}
                   <div className="flex items-center space-x-3 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
                     <div className="w-8 h-8 rounded-xl bg-purple-950/80 text-purple-400 flex items-center justify-center flex-shrink-0">
                       <MapPin className="w-4 h-4" />
@@ -451,23 +580,61 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                     <div className="flex-1 min-w-0">
                       <span className="text-[10px] text-gray-400 uppercase font-semibold block">Location</span>
                       <span className="font-semibold text-gray-200 truncate block">
-                        {location || analysisResult?.place_name || analysisResult?.location_hint || 'Physical World'}
+                        {location || 'Location unavailable'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Date */}
-                  <div className="flex items-center space-x-3 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
-                    <div className="w-8 h-8 rounded-xl bg-blue-950/80 text-blue-400 flex items-center justify-center flex-shrink-0">
-                      <Calendar className="w-4 h-4" />
+                  {/* Date — Prioritizes Original Photo Date */}
+                  {isExifDateAvailable && capturedAt ? (
+                    <div className="flex items-center space-x-3 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
+                      <div className="w-8 h-8 rounded-xl bg-blue-950/80 text-blue-400 flex items-center justify-center flex-shrink-0">
+                        <Calendar className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] text-gray-400 uppercase font-semibold block">Date</span>
+                        <span className="font-semibold text-gray-200 truncate block font-mono">
+                          {formatDisplayDate(capturedAt)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] text-gray-400 uppercase font-semibold block">Date</span>
-                      <span className="font-semibold text-gray-200 truncate block font-mono">
-                        {currentDateFormatted}
-                      </span>
+                  ) : (
+                    /* When photo does NOT have EXIF date */
+                    <div className="p-3 rounded-2xl bg-gray-950/70 border border-amber-500/30 space-y-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 rounded-xl bg-amber-950/80 text-amber-400 flex items-center justify-center flex-shrink-0">
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-amber-400 uppercase font-semibold block">Date</span>
+                          <span className="text-xs text-amber-300 font-medium block">
+                            {capturedAt ? formatDisplayDate(capturedAt) : 'Original photo date unavailable'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Manual Date Input */}
+                      <div className="pt-1">
+                        <label className="text-[11px] text-gray-400 block mb-1">
+                          Select photo date (optional)
+                        </label>
+                        <input
+                          type="date"
+                          value={manualDate}
+                          onChange={e => {
+                            const val = e.target.value;
+                            setManualDate(val);
+                            if (val) {
+                              setCapturedAt(new Date(val).toISOString());
+                            } else {
+                              setCapturedAt(null);
+                            }
+                          }}
+                          className="w-full bg-gray-900 border border-gray-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Location Picker Editor */}
@@ -476,10 +643,16 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                     location={location}
                     latitude={latitude}
                     longitude={longitude}
+                    locationStatus={locationStatus}
+                    isLocating={isLocating}
+                    onDetectLocation={handleManualLocationDetection}
                     onChangeLocation={(loc, lat, lng) => {
                       setLocation(loc);
                       setLatitude(lat);
                       setLongitude(lng);
+                      if (loc) {
+                        setLocationStatus(null);
+                      }
                     }}
                   />
                 </div>
@@ -523,11 +696,10 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                             type="text"
                             value={price}
                             onChange={e => setPrice(e.target.value)}
-                            placeholder="e.g. ₹1,499"
-                            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                            placeholder="e.g. ₹2,499"
+                            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                           />
                         </div>
-
                         <div>
                           <label className="block text-[11px] text-gray-400 mb-1">
                             Brand (optional)
@@ -536,8 +708,8 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                             type="text"
                             value={brand}
                             onChange={e => setBrand(e.target.value)}
-                            placeholder="e.g. Nike, Lavie"
-                            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                            placeholder="e.g. Zara"
+                            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                           />
                         </div>
                       </div>
@@ -545,32 +717,14 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                   )}
                 </div>
 
-                {/* Have I seen this before? Check Option */}
-                <HaveISeenThis
-                  similarity={similarity}
-                  onCheckSimilarity={async () => {
-                    const t = analysisResult?.title || userNote || 'Physical Memory';
-                    await checkSimilarity(
-                      t,
-                      analysisResult?.category || 'Objects',
-                      brand || analysisResult?.brand || null,
-                      analysisResult?.colors || [],
-                      analysisResult?.visible_text || []
-                    );
-                  }}
-                  onViewMemory={onViewMemory}
-                  isChecking={isCheckingSimilarity}
-                />
-
-                {/* Big Primary Action: [ Save Memory ] */}
+                {/* Primary Action Button: Save Memory */}
                 <div className="pt-2">
                   <button
-                    type="button"
                     onClick={handleSaveMemory}
                     disabled={isAnalyzing}
-                    className="w-full min-h-[52px] py-3.5 px-6 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm sm:text-base flex items-center justify-center space-x-2 shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="w-full min-h-[48px] py-3.5 px-6 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm shadow-glow flex items-center justify-center space-x-2 transition-all active:scale-[0.98] disabled:opacity-50"
                   >
-                    <Check className="w-5 h-5" />
+                    <Check className="w-4 h-4" />
                     <span>Save Memory</span>
                   </button>
                 </div>

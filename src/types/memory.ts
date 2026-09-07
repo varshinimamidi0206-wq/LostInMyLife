@@ -43,7 +43,8 @@ export interface Memory {
   location: string;
   latitude?: number | null;
   longitude?: number | null;
-  captured_at: string;
+  captured_at: string | null;
+  uploaded_at?: string;
   search_text?: string;
   confidence?: number;
   created_at?: string;

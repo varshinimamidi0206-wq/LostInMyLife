@@ -55,13 +55,17 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
 
         // Sorting
         if (sortOption === 'newest') {
-          results = [...results].sort(
-            (a, b) => new Date(b.captured_at).getTime() - new Date(a.captured_at).getTime()
-          );
+          results = [...results].sort((a, b) => {
+            const timeA = a.captured_at ? new Date(a.captured_at).getTime() : 0;
+            const timeB = b.captured_at ? new Date(b.captured_at).getTime() : 0;
+            return timeB - timeA;
+          });
         } else if (sortOption === 'oldest') {
-          results = [...results].sort(
-            (a, b) => new Date(a.captured_at).getTime() - new Date(b.captured_at).getTime()
-          );
+          results = [...results].sort((a, b) => {
+            const timeA = a.captured_at ? new Date(a.captured_at).getTime() : 0;
+            const timeB = b.captured_at ? new Date(b.captured_at).getTime() : 0;
+            return timeA - timeB;
+          });
         }
 
         if (!isCancelled) {
@@ -91,8 +95,9 @@ export const MemoriesScreen: React.FC<MemoriesScreenProps> = ({
     const groups: { [key: string]: Memory[] } = {};
 
     filteredMemories.forEach(mem => {
-      const d = new Date(mem.captured_at);
-      const groupKey = d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      const groupKey = mem.captured_at
+        ? new Date(mem.captured_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+        : 'Date unavailable';
 
       if (!groups[groupKey]) {
         groups[groupKey] = [];

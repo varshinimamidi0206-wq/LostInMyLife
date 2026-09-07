@@ -108,7 +108,7 @@ export const GroundedAnswer: React.FC<GroundedAnswerProps> = ({
                     {/* Place */}
                     <p className="text-xs text-cyan-300 font-medium flex items-center space-x-1 truncate">
                       <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                      <span className="truncate">{mem.location || mem.place_name || 'Physical World'}</span>
+                      <span className="truncate">{mem.location || mem.place_name || 'Location unavailable'}</span>
                     </p>
 
                     {/* Date */}

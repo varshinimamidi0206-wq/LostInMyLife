@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { RefreshCw, X, AlertCircle, Camera, Image as ImageIcon } from 'lucide-react';
 
 interface CameraViewProps {
-  onCapture: (imageBase64: string) => void;
+  onCapture: (imageBase64: string, capturedAt: string) => void;
   onClose: () => void;
   onSelectFileFallback?: () => void;
 }
@@ -80,10 +80,11 @@ export const CameraView: React.FC<CameraViewProps> = ({ onCapture, onClose, onSe
       if (ctx) {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const base64 = canvas.toDataURL('image/jpeg', 0.85);
+        const captureTime = new Date().toISOString();
         if (stream) {
           stream.getTracks().forEach(t => t.stop());
         }
-        onCapture(base64);
+        onCapture(base64, captureTime);
       }
     } catch (err) {
       console.error('Error snapping photo:', err);

@@ -270,7 +270,7 @@ export function generateHeuristicMemory(note: string, location?: string): AIAnal
   }
 
   // Default fallback
-  const fallbackTitle = note ? note.charAt(0).toUpperCase() + note.slice(1) : 'Physical World Memory';
+  const fallbackTitle = note ? note.charAt(0).toUpperCase() + note.slice(1) : 'Physical Memory';
   return {
     memory_type: 'object',
     title: fallbackTitle,

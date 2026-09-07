@@ -45,14 +45,14 @@ export const MemoryDetailPage: React.FC<MemoryDetailPageProps> = ({
   }
 
   const title = memory.title || memory.object_name || 'Physical Memory';
-  const locationText = memory.location || memory.place_name || 'Physical World';
+  const locationText = memory.location || memory.place_name || 'Location unavailable';
   const dateFormatted = memory.captured_at
     ? new Date(memory.captured_at).toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'long',
         year: 'numeric',
       })
-    : 'Recorded Date';
+    : 'Date unavailable';
 
   const handleDelete = () => {
     onDeleteMemory(memory.id);

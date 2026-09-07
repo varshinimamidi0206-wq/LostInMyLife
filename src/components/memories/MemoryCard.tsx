@@ -19,10 +19,10 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({
         month: 'short',
         year: 'numeric',
       })
-    : '';
+    : 'Date unavailable';
 
   const title = memory.title || memory.object_name || 'Physical Memory';
-  const locationText = memory.location || memory.place_name || 'Saved Location';
+  const locationText = memory.location || memory.place_name || 'Location unavailable';
 
   if (variant === 'compact') {
     return (

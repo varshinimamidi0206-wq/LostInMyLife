@@ -20,9 +20,11 @@ export const MemoryStudio: React.FC<MemoryStudioProps> = ({
   onNavigateCapture,
 }) => {
   // Chronologically sorted memories (newest first)
-  const sortedTimeline = [...memories].sort(
-    (a, b) => new Date(b.captured_at).getTime() - new Date(a.captured_at).getTime()
-  );
+  const sortedTimeline = [...memories].sort((a, b) => {
+    const timeA = a.captured_at ? new Date(a.captured_at).getTime() : 0;
+    const timeB = b.captured_at ? new Date(b.captured_at).getTime() : 0;
+    return timeB - timeA;
+  });
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-7 pb-28 md:pb-12">
@@ -56,14 +58,15 @@ export const MemoryStudio: React.FC<MemoryStudioProps> = ({
         {sortedTimeline.length > 0 ? (
           <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-2 sm:before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gradient-to-b before:from-cyan-500/80 before:via-blue-500/40 before:to-gray-800">
             {sortedTimeline.map((mem) => {
-              const dateObj = new Date(mem.captured_at);
-              const formattedDate = dateObj.toLocaleDateString('en-GB', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              });
+              const formattedDate = mem.captured_at
+                ? new Date(mem.captured_at).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })
+                : 'Date unavailable';
               const title = mem.title || mem.object_name || 'Physical Memory';
-              const locationText = mem.location || mem.place_name || 'Saved location';
+              const locationText = mem.location || mem.place_name || 'Location unavailable';
 
               return (
                 <div

@@ -21,7 +21,7 @@ export const MemoryDetailModal: React.FC<MemoryDetailModalProps> = ({
   if (!memory) return null;
 
   const title = memory.title || memory.object_name || 'Physical Memory';
-  const locationText = memory.location || memory.place_name || 'Physical World';
+  const locationText = memory.location || memory.place_name || 'Location unavailable';
 
   const dateFormatted = memory.captured_at
     ? new Date(memory.captured_at).toLocaleDateString('en-GB', {
