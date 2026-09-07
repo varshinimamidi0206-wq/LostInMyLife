@@ -90,6 +90,7 @@ export async function syncMemories(userId?: string | null): Promise<Memory[]> {
       const { data, error } = await supabase
         .from('memories')
         .select('*')
+        .eq('user_id', userId)
         .order('captured_at', { ascending: false });
 
       if (!error && data) {
@@ -200,7 +201,11 @@ export async function persistMemory(memory: Memory, userId?: string | null): Pro
 export async function deleteMemoryRecord(id: string, userId?: string | null): Promise<void> {
   if (isSupabaseConfigured && supabase) {
     try {
-      await supabase.from('memories').delete().eq('id', id);
+      let query = supabase.from('memories').delete().eq('id', id);
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      await query;
     } catch (err) {
       console.warn('Supabase delete error:', err);
     }

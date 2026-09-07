@@ -15,40 +15,60 @@ export const AuthCallback: React.FC = () => {
       }
 
       try {
-        // Exchange code/tokens in URL hash or query params
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const authError = urlParams.get('error') || urlParams.get('error_description');
 
-        if (error) {
-          console.error('OAuth Callback Session Error:', error);
-          setErrorText('Unable to complete Google sign-in. Redirecting...');
-          setTimeout(() => navigate('/login?error=callback_failed', { replace: true }), 2000);
+        if (authError) {
+          console.error('OAuth URL error:', authError);
+          setErrorText('Unable to complete Google sign-in. Redirecting to login...');
+          setTimeout(() => navigate('/login?error=oauth_failed', { replace: true }), 1500);
           return;
         }
 
-        if (session && session.user) {
-          // Successfully established session
-          navigate('/home', { replace: true });
-        } else {
-          // If session is still resolving from URL hash, listen once for auth state change
-          const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-            if (event === 'SIGNED_IN' && newSession) {
-              subscription.unsubscribe();
-              navigate('/home', { replace: true });
-            }
-          });
-
-          // Fallback timeout in case no session is recovered
-          const timeout = setTimeout(() => {
-            subscription.unsubscribe();
-            navigate('/login?error=timeout', { replace: true });
-          }, 5000);
-
-          return () => clearTimeout(timeout);
+        // 1. If PKCE authorization code is in query string, exchange it for session
+        if (code) {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error && data?.session?.user) {
+            navigate('/home', { replace: true });
+            return;
+          }
+          if (error) {
+            console.warn('PKCE exchange error, trying session fallback:', error.message);
+          }
         }
+
+        // 2. Check active session (recovering from URL hash tokens or cookies)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error('OAuth Callback Session Error:', sessionError);
+        }
+
+        if (session && session.user) {
+          navigate('/home', { replace: true });
+          return;
+        }
+
+        // 3. Listen for asynchronous auth state change
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+          if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && newSession?.user) {
+            subscription.unsubscribe();
+            navigate('/home', { replace: true });
+          }
+        });
+
+        // Timeout fallback
+        const timeout = setTimeout(() => {
+          subscription.unsubscribe();
+          navigate('/home', { replace: true });
+        }, 3500);
+
+        return () => clearTimeout(timeout);
       } catch (err: any) {
         console.error('OAuth Callback Exception:', err);
         setErrorText('Authentication failed. Redirecting to login...');
-        setTimeout(() => navigate('/login?error=exception', { replace: true }), 2000);
+        setTimeout(() => navigate('/login?error=exception', { replace: true }), 1500);
       }
     }
 
