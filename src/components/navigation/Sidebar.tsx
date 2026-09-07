@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Home,
   Camera,
@@ -9,27 +10,25 @@ import {
   Laptop,
   Sparkles,
 } from 'lucide-react';
-import { NavigationTab } from '../../types/memory';
 
 interface SidebarProps {
-  activeTab: NavigationTab;
-  onTabChange: (tab: NavigationTab) => void;
   onOpenPrivacy: () => void;
   memoryCount: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  activeTab,
-  onTabChange,
   onOpenPrivacy,
   memoryCount,
 }) => {
-  const navItems: { id: NavigationTab; label: string; icon: React.FC<{ className?: string }>; badge?: string }[] = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'capture', label: 'Capture Memory', icon: Camera },
-    { id: 'memories', label: 'Memories', icon: Layers, badge: memoryCount > 0 ? String(memoryCount) : undefined },
-    { id: 'ask', label: 'Ask My Memory', icon: HelpCircle },
-    { id: 'studio', label: 'Memory Timeline', icon: Clock },
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const navItems = [
+    { path: '/home', label: 'Home', icon: Home },
+    { path: '/capture', label: 'Capture Memory', icon: Camera },
+    { path: '/memories', label: 'Memories', icon: Layers, badge: memoryCount > 0 ? String(memoryCount) : undefined },
+    { path: '/ask', label: 'Ask My Memory', icon: HelpCircle },
+    { path: '/timeline', label: 'Memory Timeline', icon: Clock },
   ];
 
   return (
@@ -38,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header */}
         <div
           className="flex items-center space-x-3 mb-8 cursor-pointer group"
-          onClick={() => onTabChange('home')}
+          onClick={() => navigate('/home')}
         >
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-cyan-500 to-blue-600 p-0.5 shadow-glow flex items-center justify-center transition-transform group-hover:scale-105">
             <div className="w-full h-full bg-gray-950/80 rounded-[14px] flex items-center justify-center">
@@ -59,11 +58,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <nav className="space-y-1.5" aria-label="Main Desktop Navigation">
           {navItems.map(item => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isActive =
+              location.pathname === item.path ||
+              (item.path === '/memories' && location.pathname.startsWith('/memory/'));
+
             return (
               <button
-                key={item.id}
-                onClick={() => onTabChange(item.id)}
+                key={item.path}
+                onClick={() => {
+                  navigate(item.path);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl text-sm font-medium transition-all duration-200 group ${
                   isActive
                     ? 'bg-gradient-to-r from-cyan-950/80 to-blue-950/50 text-cyan-300 border border-cyan-500/40 shadow-sm font-semibold'

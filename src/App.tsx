@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { NavigationTab, Memory } from './types/memory';
+import { Routes, Route, Navigate, useNavigate, Outlet } from 'react-router-dom';
+import { Memory } from './types/memory';
 import { Sidebar } from './components/navigation/Sidebar';
 import { BottomNav } from './components/navigation/BottomNav';
 import { TopNav } from './components/navigation/TopNav';
@@ -8,9 +9,13 @@ import { CaptureScreen } from './components/capture/CaptureScreen';
 import { MemoriesScreen } from './components/memories/MemoriesScreen';
 import { AskScreen } from './components/ask/AskScreen';
 import { MemoryStudio } from './components/studio/MemoryStudio';
-import { MemoryDetailModal } from './components/memories/MemoryDetailModal';
+import { MemoryDetailPage } from './components/memories/MemoryDetailPage';
 import { PrivacyModal } from './components/common/PrivacyModal';
 import { DemoBanner } from './components/common/DemoBanner';
+import { LoginScreen } from './components/auth/LoginScreen';
+import { AuthCallback } from './components/auth/AuthCallback';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { useAuth } from './context/AuthContext';
 import {
   getLocalMemories,
   addLocalMemory,
@@ -18,171 +23,192 @@ import {
   clearAllLocalMemories,
   resetToDemoData,
   syncMemories,
+  persistMemory,
+  deleteMemoryRecord,
   getDemoModeSetting,
   setDemoModeSetting,
 } from './services/storage';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<NavigationTab>('home');
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [memories, setMemories] = useState<Memory[]>([]);
-  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [demoMode, setDemoMode] = useState<boolean>(getDemoModeSetting());
   const [askInitialQuery, setAskInitialQuery] = useState<string>('');
 
+  // Initial and reactive memory loading per authenticated user
   useEffect(() => {
-    // Initial memory loading & synchronization
-    const initial = getLocalMemories();
+    const userId = user?.id || null;
+    const initial = getLocalMemories(userId);
     setMemories(initial);
 
-    syncMemories().then(synced => {
-      if (synced && synced.length > 0) {
-        setMemories(synced);
-      }
-    });
-  }, []);
+    if (userId) {
+      syncMemories(userId).then(synced => {
+        if (synced) {
+          setMemories(synced);
+        }
+      });
+    }
+  }, [user?.id]);
 
   const handleToggleDemoMode = () => {
     const next = !demoMode;
     setDemoMode(next);
     setDemoModeSetting(next);
     if (next && memories.length === 0) {
-      const reloaded = resetToDemoData();
+      const reloaded = resetToDemoData(user?.id);
       setMemories(reloaded);
     }
   };
 
-  const handleMemoryCreated = (newMem: Memory) => {
-    const updated = addLocalMemory(newMem);
+  const handleMemoryCreated = async (newMem: Memory) => {
+    const updated = addLocalMemory(newMem, user?.id);
     setMemories(updated);
-  };
-
-  const handleDeleteMemory = (id: string) => {
-    const updated = removeLocalMemory(id);
-    setMemories(updated);
-    if (selectedMemory?.id === id) {
-      setSelectedMemory(null);
+    if (user?.id) {
+      await persistMemory(newMem, user.id);
     }
   };
 
+  const handleDeleteMemory = async (id: string) => {
+    await deleteMemoryRecord(id, user?.id);
+    const updated = removeLocalMemory(id, user?.id);
+    setMemories(updated);
+  };
+
   const handleClearAll = () => {
-    const empty = clearAllLocalMemories();
+    const empty = clearAllLocalMemories(user?.id);
     setMemories(empty);
-    setSelectedMemory(null);
   };
 
   const handleResetDemo = () => {
-    const reset = resetToDemoData();
+    const reset = resetToDemoData(user?.id);
     setMemories(reset);
   };
 
   const handleQuickAsk = (question: string) => {
     setAskInitialQuery(question);
-    setActiveTab('ask');
+    navigate('/ask');
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-950 text-slate-100 font-sans">
-      {/* Desktop Navigation Sidebar (1024px+) */}
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={tab => {
-          setActiveTab(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
-        onOpenPrivacy={() => setIsPrivacyOpen(true)}
-        memoryCount={memories.length}
-      />
+    <Routes>
+      {/* Public Authentication Routes */}
+      <Route path="/login" element={<LoginScreen />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Top Header Bar */}
-        <TopNav
-          activeTab={activeTab}
-          onNavigateHome={() => setActiveTab('home')}
-          demoMode={demoMode}
-          onToggleDemoMode={handleToggleDemoMode}
-          onOpenPrivacy={() => setIsPrivacyOpen(true)}
-        />
+      {/* Protected Application Layout */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <div className="flex min-h-screen bg-gray-950 text-slate-100 font-sans">
+              {/* Desktop Navigation Sidebar (1024px+) */}
+              <Sidebar
+                onOpenPrivacy={() => setIsPrivacyOpen(true)}
+                memoryCount={memories.length}
+              />
 
-        {/* Demo Mode Judge Helper Banner */}
-        {demoMode && (
-          <DemoBanner
-            onQuickAsk={handleQuickAsk}
-            onNavigate={tab => setActiveTab(tab)}
-          />
-        )}
+              {/* Main Content Area */}
+              <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+                {/* Top Header Bar */}
+                <TopNav
+                  demoMode={demoMode}
+                  onToggleDemoMode={handleToggleDemoMode}
+                  onOpenPrivacy={() => setIsPrivacyOpen(true)}
+                />
 
-        {/* Dynamic Tab Views */}
-        <main className="flex-1">
-          {activeTab === 'home' && (
+                {/* Demo Mode Judge Helper Banner */}
+                {demoMode && (
+                  <DemoBanner
+                    onQuickAsk={handleQuickAsk}
+                    onNavigate={tab => navigate(`/${tab}`)}
+                  />
+                )}
+
+                {/* Dynamic Screen Views via Outlet */}
+                <main className="flex-1">
+                  <Outlet />
+                </main>
+
+                {/* Mobile Bottom Navigation */}
+                <BottomNav />
+              </div>
+
+              {/* Privacy & Data Settings Modal */}
+              <PrivacyModal
+                isOpen={isPrivacyOpen}
+                onClose={() => setIsPrivacyOpen(false)}
+                onClearAllMemories={handleClearAll}
+                onResetDemo={handleResetDemo}
+                memoryCount={memories.length}
+              />
+            </div>
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route
+          path="/home"
+          element={
             <HomeScreen
               recentMemories={memories}
-              onNavigate={tab => setActiveTab(tab)}
-              onSelectMemory={mem => setSelectedMemory(mem)}
+              onNavigate={tab => navigate(`/${tab}`)}
+              onSelectMemory={mem => navigate(`/memory/${mem.id}`)}
             />
-          )}
-
-          {activeTab === 'capture' && (
+          }
+        />
+        <Route
+          path="/capture"
+          element={
             <CaptureScreen
               existingMemories={memories}
               onMemoryCreated={handleMemoryCreated}
-              onViewMemory={mem => setSelectedMemory(mem)}
+              onViewMemory={mem => navigate(`/memory/${mem.id}`)}
             />
-          )}
-
-          {activeTab === 'memories' && (
+          }
+        />
+        <Route
+          path="/memories"
+          element={
             <MemoriesScreen
               memories={memories}
-              onSelectMemory={mem => setSelectedMemory(mem)}
-              onNavigateCapture={() => setActiveTab('capture')}
+              onSelectMemory={mem => navigate(`/memory/${mem.id}`)}
+              onNavigateCapture={() => navigate('/capture')}
             />
-          )}
-
-          {activeTab === 'ask' && (
+          }
+        />
+        <Route
+          path="/ask"
+          element={
             <AskScreen
               memories={memories}
-              onSelectMemory={mem => setSelectedMemory(mem)}
+              onSelectMemory={mem => navigate(`/memory/${mem.id}`)}
               initialQuery={askInitialQuery}
             />
-          )}
-
-          {activeTab === 'studio' && (
+          }
+        />
+        <Route
+          path="/timeline"
+          element={
             <MemoryStudio
               memories={memories}
-              onSelectMemory={mem => setSelectedMemory(mem)}
-              onNavigateCapture={() => setActiveTab('capture')}
+              onSelectMemory={mem => navigate(`/memory/${mem.id}`)}
+              onNavigateCapture={() => navigate('/capture')}
             />
-          )}
-        </main>
-
-        {/* Mobile Bottom Navigation */}
-        <BottomNav
-          activeTab={activeTab}
-          onTabChange={tab => {
-            setActiveTab(tab);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          }
         />
-      </div>
-
-      {/* Memory Detail Modal */}
-      <MemoryDetailModal
-        memory={selectedMemory}
-        allMemories={memories}
-        onClose={() => setSelectedMemory(null)}
-        onDeleteMemory={handleDeleteMemory}
-        onSelectMemory={mem => setSelectedMemory(mem)}
-      />
-
-      {/* Privacy & Data Settings Modal */}
-      <PrivacyModal
-        isOpen={isPrivacyOpen}
-        onClose={() => setIsPrivacyOpen(false)}
-        onClearAllMemories={handleClearAll}
-        onResetDemo={handleResetDemo}
-        memoryCount={memories.length}
-      />
-    </div>
+        <Route path="/studio" element={<Navigate to="/timeline" replace />} />
+        <Route
+          path="/memory/:id"
+          element={
+            <MemoryDetailPage
+              memories={memories}
+              onDeleteMemory={handleDeleteMemory}
+            />
+          }
+        />
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Route>
+    </Routes>
   );
 }
