@@ -14,6 +14,7 @@ import { PrivacyModal } from './components/common/PrivacyModal';
 import { DemoBanner } from './components/common/DemoBanner';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { AuthCallback } from './components/auth/AuthCallback';
+import { ResetPasswordScreen } from './components/auth/ResetPasswordScreen';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import {
@@ -96,6 +97,7 @@ export default function App() {
       {/* Public Authentication Routes */}
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/reset-password" element={<ResetPasswordScreen />} />
 
       {/* Protected Application Layout */}
       <Route

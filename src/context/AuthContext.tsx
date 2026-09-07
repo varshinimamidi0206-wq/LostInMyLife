@@ -7,6 +7,10 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithPassword: (email: string, password: string) => Promise<{ data: any; error: Error | null }>;
+  signUp: (email: string, password: string) => Promise<{ data: any; error: Error | null }>;
+  resetPasswordForEmail: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isConfigured: boolean;
 }
@@ -35,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
-    // 2. Listen to authentication state changes (SIGN_IN, SIGN_OUT, TOKEN_REFRESHED)
+    // 2. Listen to authentication state changes (SIGN_IN, SIGN_OUT, TOKEN_REFRESHED, USER_UPDATED)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
@@ -75,6 +79,79 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithPassword = async (email: string, password: string): Promise<{ data: any; error: Error | null }> => {
+    if (!isSupabaseConfigured || !supabase) {
+      return { data: null, error: new Error('Supabase is not configured.') };
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (err: any) {
+      return { data: null, error: err };
+    }
+  };
+
+  const signUp = async (email: string, password: string): Promise<{ data: any; error: Error | null }> => {
+    if (!isSupabaseConfigured || !supabase) {
+      return { data: null, error: new Error('Supabase is not configured.') };
+    }
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+      return { data, error: null };
+    } catch (err: any) {
+      return { data: null, error: err };
+    }
+  };
+
+  const resetPasswordForEmail = async (email: string): Promise<{ error: Error | null }> => {
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: new Error('Supabase is not configured.') };
+    }
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+      return { error: null };
+    } catch (err: any) {
+      return { error: err };
+    }
+  };
+
+  const updatePassword = async (password: string): Promise<{ error: Error | null }> => {
+    if (!isSupabaseConfigured || !supabase) {
+      return { error: new Error('Supabase is not configured.') };
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+
+      if (error) throw error;
+      return { error: null };
+    } catch (err: any) {
+      return { error: err };
+    }
+  };
+
   const signOut = async () => {
     if (isSupabaseConfigured && supabase) {
       try {
@@ -94,6 +171,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         session,
         loading,
         signInWithGoogle,
+        signInWithPassword,
+        signUp,
+        resetPasswordForEmail,
+        updatePassword,
         signOut,
         isConfigured: isSupabaseConfigured,
       }}
