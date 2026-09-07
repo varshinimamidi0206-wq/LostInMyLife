@@ -2,8 +2,8 @@ import { Memory } from '../types/memory';
 import { INITIAL_DEMO_MEMORIES } from './demoData';
 import { supabase, isSupabaseConfigured } from './supabase';
 
-const MEMORIES_STORAGE_KEY = 'lost_in_my_life_memories_v2';
-const DEMO_MODE_KEY = 'lost_in_my_life_demo_mode_v2';
+const MEMORIES_STORAGE_KEY = 'lost_in_my_life_memories_v3';
+const DEMO_MODE_KEY = 'lost_in_my_life_demo_mode_v3';
 
 export function getLocalMemories(): Memory[] {
   try {

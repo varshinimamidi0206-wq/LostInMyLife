@@ -1,15 +1,20 @@
 import React from 'react';
-import { MapPin, Calendar, Image as ImageIcon, BookOpen, FileText, Map, ShoppingBag, Utensils, Ticket, Sparkles } from 'lucide-react';
-import { Memory, MemoryType } from '../../types/memory';
+import { MapPin, Calendar, ChevronRight } from 'lucide-react';
+import { Memory } from '../../types/memory';
 
 interface MemoryCardProps {
   memory: Memory;
   onClick: () => void;
+  variant?: 'card' | 'compact';
 }
 
-export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, onClick }) => {
+export const MemoryCard: React.FC<MemoryCardProps> = ({
+  memory,
+  onClick,
+  variant = 'card',
+}) => {
   const dateFormatted = memory.captured_at
-    ? new Date(memory.captured_at).toLocaleDateString('en-US', {
+    ? new Date(memory.captured_at).toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -17,103 +22,73 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, onClick }) => {
     : '';
 
   const title = memory.title || memory.object_name || 'Physical Memory';
-  const summary = memory.summary || memory.description || 'Saved physical world memory.';
-  const type = (memory.memory_type || 'object').toLowerCase() as MemoryType;
+  const locationText = memory.location || memory.place_name || 'Saved Location';
 
-  // Type badge styling & icon
-  const getTypeMeta = (mType: string) => {
-    switch (mType) {
-      case 'place':
-        return { label: 'Place', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-500/30', icon: Map };
-      case 'document':
-        return { label: 'Document', color: 'bg-blue-950/90 text-blue-300 border-blue-500/30', icon: FileText };
-      case 'book':
-        return { label: 'Book', color: 'bg-amber-950/90 text-amber-300 border-amber-500/30', icon: BookOpen };
-      case 'food':
-        return { label: 'Food', color: 'bg-orange-950/90 text-orange-300 border-orange-500/30', icon: Utensils };
-      case 'ticket':
-      case 'event':
-        return { label: 'Experience', color: 'bg-purple-950/90 text-purple-300 border-purple-500/30', icon: Ticket };
-      case 'product':
-        return { label: 'Product', color: 'bg-rose-950/90 text-rose-300 border-rose-500/30', icon: ShoppingBag };
-      default:
-        return { label: 'Object', color: 'bg-cyan-950/90 text-cyan-300 border-cyan-500/30', icon: Sparkles };
-    }
-  };
-
-  const typeMeta = getTypeMeta(type);
-  const TypeIcon = typeMeta.icon;
-
-  return (
-    <div
-      onClick={onClick}
-      className="group relative bg-gray-900/70 hover:bg-gray-900 border border-gray-800/90 hover:border-cyan-500/40 rounded-3xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-glow flex flex-col active:scale-[0.99]"
-    >
-      {/* Thumbnail with overlay tags */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-950">
+  if (variant === 'compact') {
+    return (
+      <div
+        onClick={onClick}
+        className="group bg-gray-900/60 hover:bg-gray-900 border border-gray-800/80 hover:border-cyan-500/40 rounded-2xl p-3 flex items-center space-x-3.5 cursor-pointer transition-all duration-200 active:scale-[0.99] shadow-sm"
+      >
         <img
           src={memory.image_url}
           alt={title}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl object-cover border border-gray-800 flex-shrink-0"
         />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-gray-950/20 to-transparent pointer-events-none" />
+        <div className="flex-1 min-w-0 space-y-1">
+          <h4 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors truncate">
+            {title}
+          </h4>
 
-        {/* Memory Type badge (Top-Left) */}
-        <div className="absolute top-3 left-3">
-          <span className={`inline-flex items-center space-x-1 text-[11px] font-semibold px-2.5 py-1 rounded-full border backdrop-blur-md shadow-sm ${typeMeta.color}`}>
-            <TypeIcon className="w-3 h-3" />
-            <span>{typeMeta.label}</span>
-          </span>
+          <div className="flex items-center space-x-1.5 text-xs text-gray-400 truncate">
+            <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+            <span className="truncate">{locationText}</span>
+          </div>
+
+          <div className="flex items-center space-x-1.5 text-[11px] text-gray-500 font-mono">
+            <Calendar className="w-3 h-3 text-gray-500 flex-shrink-0" />
+            <span>{dateFormatted}</span>
+          </div>
         </div>
 
-        {/* Source badge if imported from Google Photos (Top-Right) */}
-        {memory.source === 'google_photos' && (
-          <div className="absolute top-3 right-3 bg-gray-950/80 backdrop-blur-md px-2.5 py-1 rounded-full border border-gray-700 flex items-center space-x-1 text-[10px] text-gray-300">
-            <ImageIcon className="w-3 h-3 text-cyan-400" />
-            <span>Google Photos</span>
-          </div>
-        )}
+        <ChevronRight className="w-4 h-4 text-gray-600 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all flex-shrink-0 mr-1" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={onClick}
+      className="group bg-gray-900/60 hover:bg-gray-900 border border-gray-800/80 hover:border-cyan-500/40 rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glow flex flex-col active:scale-[0.99]"
+    >
+      {/* Photo with subtle top-to-bottom depth */}
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-950">
+        <img
+          src={memory.image_url}
+          alt={title}
+          loading="lazy"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-80 pointer-events-none" />
       </div>
 
-      {/* Card Info */}
-      <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-        <div className="space-y-1">
-          <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-cyan-300 transition-colors line-clamp-1">
-            {title}
-          </h3>
+      {/* Info Body */}
+      <div className="p-3.5 flex-1 flex flex-col justify-between space-y-2.5">
+        <h3 className="font-bold text-sm sm:text-base text-white group-hover:text-cyan-300 transition-colors truncate">
+          {title}
+        </h3>
 
-          <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
-            {summary}
-          </p>
-        </div>
-
-        {/* Place and Date Footer */}
-        <div className="pt-2.5 border-t border-gray-800/70 space-y-1.5 text-xs text-gray-400">
+        <div className="space-y-1 text-xs text-gray-400">
           <div className="flex items-center space-x-1.5 truncate">
             <MapPin className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-            <span className="truncate text-gray-300 font-medium">
-              {memory.location || memory.place_name || 'Physical World'}
-            </span>
+            <span className="truncate text-gray-300 font-medium">{locationText}</span>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-gray-400">
-            <div className="flex items-center space-x-1.5 font-mono">
-              <Calendar className="w-3 h-3 text-gray-500 flex-shrink-0" />
-              <span>{dateFormatted}</span>
-            </div>
-
-            {/* Subtle optional price/brand tag */}
-            {memory.price ? (
-              <span className="font-mono font-semibold text-emerald-400">
-                ₹{memory.price}
-              </span>
-            ) : memory.brand ? (
-              <span className="font-medium text-gray-400 bg-gray-800/80 px-2 py-0.5 rounded text-[10px]">
-                {memory.brand}
-              </span>
-            ) : null}
+          <div className="flex items-center space-x-1.5 text-[11px] text-gray-400 font-mono">
+            <Calendar className="w-3 h-3 text-gray-500 flex-shrink-0" />
+            <span>{dateFormatted}</span>
           </div>
         </div>
       </div>

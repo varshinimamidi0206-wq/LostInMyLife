@@ -44,7 +44,7 @@ export const HaveISeenThis: React.FC<HaveISeenThisProps> = ({
           className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl bg-cyan-950/90 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all whitespace-nowrap shadow-sm active:scale-95"
         >
           <Search className="w-3.5 h-3.5" />
-          <span>🔍 Check My Memories</span>
+          <span>Check My Memories</span>
         </button>
       </div>
     );

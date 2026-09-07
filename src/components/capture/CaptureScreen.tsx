@@ -1,5 +1,18 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Image as ImageIcon, Sparkles, Check, ArrowRight, X, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import {
+  Camera,
+  Image as ImageIcon,
+  Sparkles,
+  Check,
+  ArrowRight,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  MapPin,
+  ShoppingBag,
+  Loader2,
+} from 'lucide-react';
 import { CameraView } from './CameraView';
 import { LocationPicker } from './LocationPicker';
 import { HaveISeenThis } from './HaveISeenThis';
@@ -77,7 +90,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
     triggerAutoAnalysis(base64);
   };
 
-  // Automatic gentle analysis after photo selection
+  // Automatic analysis after photo selection
   const triggerAutoAnalysis = async (imgBase64: string) => {
     setIsAnalyzing(true);
     setLoadingStage('analyzing');
@@ -159,7 +172,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
         summary: analysisResult?.summary || userNote || 'Saved physical memory.',
         memory_type: analysisResult?.memory_type || 'object',
         source: captureSource,
-        category: analysisResult?.category || 'Visual Memories',
+        category: analysisResult?.category || 'Objects',
         object_name: analysisResult?.object_name || memoryTitle,
         place_name: analysisResult?.place_name || null,
         brand: brand || analysisResult?.brand || null,
@@ -171,7 +184,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
         description: analysisResult?.description || userNote || 'Saved physical memory.',
         people_context: analysisResult?.people_context || [],
         important_details: analysisResult?.important_details || [],
-        tags: [analysisResult?.category || 'General', analysisResult?.memory_type || 'object'],
+        tags: [analysisResult?.category || 'Objects', analysisResult?.memory_type || 'object'],
         location: finalLocation,
         latitude: latitude,
         longitude: longitude,
@@ -209,7 +222,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
     }
   };
 
-  const currentDateFormatted = new Date().toLocaleDateString('en-US', {
+  const currentDateFormatted = new Date().toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -229,13 +242,15 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
         />
       )}
 
-      {/* Screen Title & Friendly Subtitle */}
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-          Save a Memory
+      {/* Screen Title & Subtitle (Desktop) */}
+      <div className="hidden lg:block space-y-1">
+        <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+          {isAnalyzing ? 'Understanding...' : 'Save a Memory'}
         </h2>
-        <p className="text-xs sm:text-sm text-gray-400 mt-1">
-          Take a photo of something you want to remember in the physical world.
+        <p className="text-xs sm:text-sm text-gray-400">
+          {isAnalyzing
+            ? 'Looking at your photo...'
+            : 'Take a photo of something you want to remember.'}
         </p>
       </div>
 
@@ -247,21 +262,21 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
             onClick={() => setErrorMessage(null)}
             className="text-red-400 hover:text-white p-1 ml-2"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* State A: Saved Memory Confirmation */}
       {createdMemory && (
-        <div className="bg-gradient-to-tr from-emerald-950/50 via-gray-900/80 to-cyan-950/50 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 shadow-glow space-y-5 animate-slide-up">
+        <div className="bg-gradient-to-tr from-emerald-950/40 via-gray-900/80 to-cyan-950/40 border border-emerald-500/40 rounded-3xl p-5 sm:p-6 shadow-glow space-y-5 animate-slide-up">
           <div className="flex items-center space-x-2.5 text-emerald-400">
             <div className="w-8 h-8 rounded-full bg-emerald-950 flex items-center justify-center border border-emerald-500/50">
               <Check className="w-4 h-4" />
             </div>
             <div>
               <h3 className="text-base font-bold text-white leading-tight">Memory Saved!</h3>
-              <p className="text-xs text-emerald-300/90">Added to your physical memories archive</p>
+              <p className="text-xs text-emerald-300/90">Added to your physical memories</p>
             </div>
           </div>
 
@@ -276,17 +291,18 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
               <h4 className="text-sm sm:text-base font-bold text-white truncate">
                 {createdMemory.title}
               </h4>
-              <p className="text-xs text-cyan-400 font-medium capitalize mt-0.5">
-                📍 {createdMemory.location || 'Saved location'}
+              <p className="text-xs text-cyan-400 font-medium capitalize mt-0.5 flex items-center space-x-1">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                <span className="truncate">{createdMemory.location || 'Saved location'}</span>
               </p>
-              <p className="text-xs text-gray-400 mt-1 flex items-center space-x-1">
-                <Calendar className="w-3.5 h-3.5 text-gray-500" />
+              <p className="text-xs text-gray-400 mt-1 flex items-center space-x-1 font-mono">
+                <Calendar className="w-3 h-3 text-gray-500 flex-shrink-0" />
                 <span>{currentDateFormatted}</span>
               </p>
             </div>
           </div>
 
-          {/* Have I Seen This Before notification card */}
+          {/* Have I Seen This Before notification */}
           <HaveISeenThis
             similarity={similarity}
             onViewMemory={onViewMemory}
@@ -297,14 +313,14 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
           <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-1">
             <button
               onClick={() => onViewMemory(createdMemory)}
-              className="w-full sm:flex-1 min-h-[46px] py-3 px-4 rounded-2xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs sm:text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-glow active:scale-95"
+              className="w-full sm:flex-1 min-h-[46px] py-3 px-4 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs sm:text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-glow active:scale-95"
             >
               <span>View Memory</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={handleResetCapture}
-              className="w-full sm:w-auto min-h-[46px] py-3 px-5 rounded-2xl bg-gray-900 border border-gray-800 text-gray-300 hover:text-white text-xs sm:text-sm font-semibold transition-colors active:scale-95"
+              className="w-full sm:w-auto min-h-[46px] py-3 px-5 rounded-full bg-gray-900 border border-gray-800 text-gray-300 hover:text-white text-xs sm:text-sm font-semibold transition-colors active:scale-95"
             >
               Save Another
             </button>
@@ -315,33 +331,47 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
       {/* State B: Photo Selection or Captured View */}
       {!createdMemory && (
         <div className="space-y-5">
-          {/* If no photo is selected yet: Big Touch-Friendly Buttons */}
           {!selectedImage ? (
-            <div className="space-y-3">
-              {/* Large Camera Card Trigger */}
-              <button
-                type="button"
-                onClick={() => setIsCameraOpen(true)}
-                className="w-full min-h-[140px] flex flex-col items-center justify-center p-6 rounded-3xl bg-gradient-to-br from-gray-900/90 to-cyan-950/40 border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 hover:bg-gray-900 transition-all duration-200 text-center group active:scale-[0.99] shadow-glow"
-              >
-                <div className="w-16 h-16 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+            /* No photo selected: Match Reference UI Screen 2 */
+            <div className="space-y-4">
+              {/* Large Camera Area */}
+              <div className="border-2 border-dashed border-cyan-500/30 hover:border-cyan-400/60 rounded-3xl p-6 sm:p-8 text-center bg-gray-900/40 transition-all group shadow-sm">
+                <div className="w-16 h-16 rounded-full bg-cyan-950/80 border border-cyan-500/40 text-cyan-400 mx-auto flex items-center justify-center mb-3 group-hover:scale-105 transition-transform shadow-glow">
                   <Camera className="w-8 h-8" />
                 </div>
-                <span className="text-base font-black text-white">📷 Take Photo</span>
-                <span className="text-xs text-gray-300 mt-1">
-                  Point at something in real life to remember it
-                </span>
-              </button>
+                <h3 className="text-base sm:text-lg font-bold text-white">
+                  Take Photo
+                </h3>
+                <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+                  Use your camera to capture something you want to remember.
+                </p>
 
-              {/* Secondary Option: Choose Photo */}
+                <button
+                  type="button"
+                  onClick={() => setIsCameraOpen(true)}
+                  className="mt-4 px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-glow transition-all active:scale-95"
+                >
+                  Take Photo
+                </button>
+              </div>
+
+              {/* "or" separator */}
+              <div className="text-center text-xs text-gray-500 font-medium">or</div>
+
+              {/* Secondary Action: Choose Photo */}
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full min-h-[52px] flex items-center justify-center space-x-2.5 py-3.5 px-4 rounded-2xl bg-gray-900/80 hover:bg-gray-800 border border-gray-800 text-gray-200 hover:text-white font-bold text-xs sm:text-sm transition-all active:scale-[0.99]"
+                className="w-full min-h-[50px] flex items-center justify-center space-x-2.5 py-3 px-4 rounded-2xl bg-gray-900/80 hover:bg-gray-800 border border-gray-800 hover:border-cyan-500/40 text-gray-200 hover:text-white font-bold text-xs sm:text-sm transition-all active:scale-[0.99]"
               >
                 <ImageIcon className="w-4 h-4 text-cyan-400" />
-                <span>🖼 Choose Photo</span>
+                <span>Choose Photo</span>
               </button>
+
+              {/* Helper text below */}
+              <p className="text-center text-xs text-gray-400 px-4 leading-relaxed">
+                We'll look at your photo and understand what it is, where it might be, and when you saw it.
+              </p>
 
               <input
                 ref={fileInputRef}
@@ -352,17 +382,17 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
               />
             </div>
           ) : (
-            /* Selected Photo Preview with Retake option */
+            /* Selected Photo Preview with Understanding Screen */
             <div className="space-y-4">
               <div className="relative rounded-3xl overflow-hidden border border-gray-800 bg-gray-950 shadow-2xl">
                 <img
                   src={selectedImage}
                   alt="Selected memory"
-                  className="w-full max-h-80 object-cover rounded-3xl"
+                  className="w-full max-h-72 object-cover rounded-3xl"
                 />
                 <button
                   onClick={handleResetCapture}
-                  className="absolute top-3 right-3 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full bg-gray-950/80 text-gray-300 hover:text-white backdrop-blur-md border border-gray-800 active:scale-90"
+                  className="absolute top-3 right-3 w-9 h-9 flex items-center justify-center rounded-full bg-gray-950/80 text-gray-300 hover:text-white backdrop-blur-md border border-gray-800 active:scale-90"
                   title="Remove photo"
                   aria-label="Remove photo"
                 >
@@ -370,40 +400,56 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                 </button>
               </div>
 
+              {/* Circular Understanding Progress Animation */}
+              {isAnalyzing && (
+                <div className="text-center py-6 space-y-3 bg-gray-900/40 border border-gray-800/80 rounded-3xl p-6">
+                  <div className="w-16 h-16 rounded-full border-4 border-cyan-500/20 border-t-cyan-400 animate-spin mx-auto flex items-center justify-center shadow-glow">
+                    <Sparkles className="w-6 h-6 text-cyan-400" />
+                  </div>
+                  <h3 className="text-sm font-bold text-white">Looking at your photo...</h3>
+                  <p className="text-xs text-gray-400">This may take a few seconds.</p>
+                </div>
+              )}
+
               {/* Detected Information Card ("What I found:") */}
               <div className="bg-gray-900/60 border border-gray-800/90 rounded-3xl p-5 space-y-4 shadow-sm">
                 <div className="flex items-center justify-between pb-2 border-b border-gray-800/60">
                   <div className="flex items-center space-x-2">
                     <Sparkles className="w-4 h-4 text-cyan-400" />
                     <h3 className="text-sm font-bold text-white">
-                      {isAnalyzing ? 'Understanding your memory...' : 'What I found:'}
+                      {isAnalyzing ? 'Analyzing photo...' : 'What I found:'}
                     </h3>
                   </div>
                   {isAnalyzing && (
-                    <span className="text-[11px] text-cyan-400 font-mono animate-pulse">
-                      Analyzing...
+                    <span className="text-xs text-cyan-400 flex items-center space-x-1 font-mono">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      <span>Processing</span>
                     </span>
                   )}
                 </div>
 
-                {/* Extracted Core Details */}
+                {/* Extracted Core Details with Clean Lucide SVG Icons */}
                 <div className="space-y-2.5 text-xs sm:text-sm">
                   {/* Item / Object */}
-                  <div className="flex items-center space-x-2.5 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
-                    <span className="text-lg">🎒</span>
+                  <div className="flex items-center space-x-3 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
+                    <div className="w-8 h-8 rounded-xl bg-cyan-950/80 text-cyan-400 flex items-center justify-center flex-shrink-0">
+                      <ShoppingBag className="w-4 h-4" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-[10px] text-gray-400 uppercase font-semibold block">What it is</span>
                       <span className="font-bold text-white truncate block">
-                        {analysisResult?.title || analysisResult?.object_name || 'Object or scene observed'}
+                        {analysisResult?.title || analysisResult?.object_name || 'Item observed'}
                       </span>
                     </div>
                   </div>
 
                   {/* Place */}
-                  <div className="flex items-center space-x-2.5 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
-                    <span className="text-lg">📍</span>
+                  <div className="flex items-center space-x-3 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
+                    <div className="w-8 h-8 rounded-xl bg-purple-950/80 text-purple-400 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-4 h-4" />
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <span className="text-[10px] text-gray-400 uppercase font-semibold block">Place</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-semibold block">Location</span>
                       <span className="font-semibold text-gray-200 truncate block">
                         {location || analysisResult?.place_name || analysisResult?.location_hint || 'Physical World'}
                       </span>
@@ -411,11 +457,13 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                   </div>
 
                   {/* Date */}
-                  <div className="flex items-center space-x-2.5 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
-                    <span className="text-lg">📅</span>
+                  <div className="flex items-center space-x-3 p-3 rounded-2xl bg-gray-950/70 border border-gray-800">
+                    <div className="w-8 h-8 rounded-xl bg-blue-950/80 text-blue-400 flex items-center justify-center flex-shrink-0">
+                      <Calendar className="w-4 h-4" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <span className="text-[10px] text-gray-400 uppercase font-semibold block">Date</span>
-                      <span className="font-semibold text-gray-200 truncate block">
+                      <span className="font-semibold text-gray-200 truncate block font-mono">
                         {currentDateFormatted}
                       </span>
                     </div>
@@ -436,7 +484,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                   />
                 </div>
 
-                {/* Optional Metadata Accordion (Price, Brand, Notes) - Not the main focus */}
+                {/* Optional Metadata Accordion (Notes, Price, Brand) */}
                 <div className="pt-2 border-t border-gray-800/60">
                   <button
                     type="button"
@@ -461,7 +509,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                           type="text"
                           value={userNote}
                           onChange={e => setUserNote(e.target.value)}
-                          placeholder="e.g. friend's recommendation, bought at sale"
+                          placeholder="e.g. friend's recommendation, stored in top shelf"
                           className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                         />
                       </div>
@@ -488,7 +536,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                             type="text"
                             value={brand}
                             onChange={e => setBrand(e.target.value)}
-                            placeholder="e.g. Sony, Nike"
+                            placeholder="e.g. Nike, Lavie"
                             className="w-full bg-gray-950 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                           />
                         </div>
@@ -504,7 +552,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                     const t = analysisResult?.title || userNote || 'Physical Memory';
                     await checkSimilarity(
                       t,
-                      analysisResult?.category || 'Visual Memories',
+                      analysisResult?.category || 'Objects',
                       brand || analysisResult?.brand || null,
                       analysisResult?.colors || [],
                       analysisResult?.visible_text || []
@@ -520,7 +568,7 @@ export const CaptureScreen: React.FC<CaptureScreenProps> = ({
                     type="button"
                     onClick={handleSaveMemory}
                     disabled={isAnalyzing}
-                    className="w-full min-h-[52px] py-4 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:opacity-95 text-white font-black text-base flex items-center justify-center space-x-2 shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="w-full min-h-[52px] py-3.5 px-6 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-sm sm:text-base flex items-center justify-center space-x-2 shadow-glow transition-all active:scale-[0.98] disabled:opacity-50"
                   >
                     <Check className="w-5 h-5" />
                     <span>Save Memory</span>

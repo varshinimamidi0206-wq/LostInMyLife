@@ -11,7 +11,6 @@ import { MemoryStudio } from './components/studio/MemoryStudio';
 import { MemoryDetailModal } from './components/memories/MemoryDetailModal';
 import { PrivacyModal } from './components/common/PrivacyModal';
 import { DemoBanner } from './components/common/DemoBanner';
-import { GooglePhotosImportModal } from './components/photos/GooglePhotosImportModal';
 import {
   getLocalMemories,
   addLocalMemory,
@@ -28,7 +27,6 @@ export default function App() {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
-  const [isPhotosImportOpen, setIsPhotosImportOpen] = useState(false);
   const [demoMode, setDemoMode] = useState<boolean>(getDemoModeSetting());
   const [askInitialQuery, setAskInitialQuery] = useState<string>('');
 
@@ -59,15 +57,6 @@ export default function App() {
     setMemories(updated);
   };
 
-  const handleMemoriesImported = (imported: Memory[]) => {
-    let current = memories;
-    for (const item of imported) {
-      current = addLocalMemory(item);
-    }
-    setMemories(current);
-    setActiveTab('memories');
-  };
-
   const handleDeleteMemory = (id: string) => {
     const updated = removeLocalMemory(id);
     setMemories(updated);
@@ -94,7 +83,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-gray-950 text-slate-100 font-sans">
-      {/* Desktop Navigation Sidebar */}
+      {/* Desktop Navigation Sidebar (1024px+) */}
       <Sidebar
         activeTab={activeTab}
         onTabChange={tab => {
@@ -102,7 +91,6 @@ export default function App() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onOpenPrivacy={() => setIsPrivacyOpen(true)}
-        onOpenPhotosImport={() => setIsPhotosImportOpen(true)}
         memoryCount={memories.length}
       />
 
@@ -110,6 +98,8 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0 min-h-screen">
         {/* Top Header Bar */}
         <TopNav
+          activeTab={activeTab}
+          onNavigateHome={() => setActiveTab('home')}
           demoMode={demoMode}
           onToggleDemoMode={handleToggleDemoMode}
           onOpenPrivacy={() => setIsPrivacyOpen(true)}
@@ -130,7 +120,6 @@ export default function App() {
               recentMemories={memories}
               onNavigate={tab => setActiveTab(tab)}
               onSelectMemory={mem => setSelectedMemory(mem)}
-              onOpenPhotosImport={() => setIsPhotosImportOpen(true)}
             />
           )}
 
@@ -147,7 +136,6 @@ export default function App() {
               memories={memories}
               onSelectMemory={mem => setSelectedMemory(mem)}
               onNavigateCapture={() => setActiveTab('capture')}
-              onOpenPhotosImport={() => setIsPhotosImportOpen(true)}
             />
           )}
 
@@ -164,7 +152,6 @@ export default function App() {
               memories={memories}
               onSelectMemory={mem => setSelectedMemory(mem)}
               onNavigateCapture={() => setActiveTab('capture')}
-              onOpenPhotosImport={() => setIsPhotosImportOpen(true)}
             />
           )}
         </main>
@@ -178,13 +165,6 @@ export default function App() {
           }}
         />
       </div>
-
-      {/* Google Photos Import Modal */}
-      <GooglePhotosImportModal
-        isOpen={isPhotosImportOpen}
-        onClose={() => setIsPhotosImportOpen(false)}
-        onMemoriesImported={handleMemoriesImported}
-      />
 
       {/* Memory Detail Modal */}
       <MemoryDetailModal
